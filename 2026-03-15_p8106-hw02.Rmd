@@ -1,0 +1,209 @@
+---
+title: "2026-03-15_p8106-hw02"
+author: "Chris"
+date: "2026-03-15"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+    number_sections: true
+    css: style.css
+---
+
+
+```{r message=FALSE}
+library(tidyverse)
+set.seed(202603)
+```
+
+
+
+# Read and Split the Data
+
+```{r}
+df_college <- read_csv("data/College.csv") |>
+  janitor::clean_names()
+
+n <- nrow(df_college)
+train_id <- sample(1:n, 0.8 * n)
+
+df_train <- df_college[train_id, ]
+df_test <- df_college[-train_id, ]
+```
+
+
+# Question a
+
+## Fit the Models
+
+```{r}
+vec_df_grid <- 2:15
+
+vec_x_grid <- seq(min(df_train$top10perc),
+                  max(df_train$top10perc),
+                  length.out = 200)
+vec_curve_list <- vector("list", length(vec_df_grid))
+
+for(i in seq_along(vec_df_grid)){
+  df_one <- vec_df_grid[i]
+  
+  fit <- smooth.spline(x = df_train$top10perc,
+                       y = df_train$outstate,
+                       df = df_one)
+  
+  pred <- predict(fit, x = vec_x_grid)
+  
+  vec_curve_list[[i]] <- tibble(
+    Top10perc = pred$x,
+    Outstate_hat = pred$y,
+    df = factor(df_one)
+  )
+}
+
+df_curve_data <- bind_rows(vec_curve_list)
+```
+
+
+## Make the Plots
+
+```{r}
+plot1_qa <- ggplot() +
+  geom_point(data = df_train,
+             aes(x = top10perc, y = outstate),
+             color = "grey60", alpha = 0.6) +
+  geom_line(data = df_curve_data,
+            aes(x = Top10perc, y = Outstate_hat, color = df),
+            linewidth = 1) +
+  labs(x = "Top10perc",
+       y = "Outstate",
+       color = "Degrees of Freedom",
+       title = "Smoothing spline fits for different degrees of freedom") +
+  theme_minimal()
+
+plot1_qa
+
+ggsave("plots/2026-03-15_plot1-question1.png", plot1_qa)
+```
+
+
+```{r}
+plot2_qa <- ggplot() +
+  geom_point(data = df_train,
+             aes(x = top10perc, y = outstate),
+             color = "grey60", alpha = 0.6) +
+  geom_line(data = df_curve_data,
+            aes(x = Top10perc, y = Outstate_hat, color = df),
+            linewidth = 1) +
+  facet_wrap(~ df, ncol = 4) +
+  labs(x = "Top10perc",
+       y = "Outstate",
+       title = "Smoothing spline fits for different degrees of freedom") +
+  theme_minimal()
+
+plot2_qa
+ggsave("plots/2026-03-15_plot2-question1.png", plot2_qa)
+```
+
+
+* As the degrees of freedom increase, the smoothing spline becomes more flexible.  
+* For very small degrees of freedom (e.g df = 2 or 3), the fitted curve is nearly linear and captures only the overall increasing trend between `Top10perc` and `Outstate`.  
+* As the degrees of freedom increase (df from f to 8), the curve begins to capture nonlinear patterns in the data, particularly slight curvature in the middle range of `Top10perc`.
+* For larger degrees of freedom (\(df \ge 10\)), the fitted curves become more flexible and show additional local fluctuations, indicating that the model may start fitting noise.  
+* However, the overall trend remains similar, suggesting that increasing the degrees of freedom beyond a certain point does not substantially change the fitted relationship.  
+
+
+## Choose the Best DF
+
+```{r}
+fit_one <- smooth.spline(x = df_train$top10perc, y = df_train$outstate, cv = TRUE)
+fit_one$df
+
+pred_cv <- predict(fit_one, x = vec_x_grid)
+df_cv_data <- tibble(
+   Top10perc = pred_cv$x,
+   Outstate_hat = pred_cv$y,
+   df = fit_one$df
+)
+
+plot3_q1 <- ggplot() +
+  geom_point(data = df_train, aes(x = top10perc, y = outstate),
+             color = "red", alpha = 0.6) +
+  geom_line(data = df_cv_data, aes(x = Top10perc, y = Outstate_hat), 
+            color = "#6a5acd", linewidth = 1.2) +
+  labs(x = "Top10perc",
+       y = "Outstate",
+       title = "Smoothing spline fits for the best degrees of freedom from cross validation") +
+  theme_minimal()
+
+plot3_q1
+ggsave("plots/2026-03-15_plot3-question1_splines-for-cv.png", plot3_q1)
+```
+
+
+
+Cross-validation selected an effective degree of freedom of approximately `r fit_one$df`.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
