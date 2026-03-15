@@ -14,6 +14,8 @@ output:
 
 ```{r message=FALSE}
 library(tidyverse)
+library(earth)
+library(pdp)
 set.seed(202603)
 ```
 
@@ -83,7 +85,7 @@ plot1_qa <- ggplot() +
 
 plot1_qa
 
-ggsave("plots/2026-03-15_plot1-question1.png", plot1_qa)
+ggsave("plots/2026-03-15_plot1-question1_multi-dfs.png", plot1_qa)
 ```
 
 
@@ -102,7 +104,7 @@ plot2_qa <- ggplot() +
   theme_minimal()
 
 plot2_qa
-ggsave("plots/2026-03-15_plot2-question1.png", plot2_qa)
+ggsave("plots/2026-03-15_plot2-question1_facets.png", plot2_qa)
 ```
 
 
@@ -126,7 +128,7 @@ df_cv_data <- tibble(
    df = fit_one$df
 )
 
-plot3_q1 <- ggplot() +
+plot3_qa <- ggplot() +
   geom_point(data = df_train, aes(x = top10perc, y = outstate),
              color = "red", alpha = 0.6) +
   geom_line(data = df_cv_data, aes(x = Top10perc, y = Outstate_hat), 
@@ -136,8 +138,8 @@ plot3_q1 <- ggplot() +
        title = "Smoothing spline fits for the best degrees of freedom from cross validation") +
   theme_minimal()
 
-plot3_q1
-ggsave("plots/2026-03-15_plot3-question1_splines-for-cv.png", plot3_q1)
+plot3_qa
+ggsave("plots/2026-03-15_plot3-question1_splines-for-cv.png", plot3_qa)
 ```
 
 
@@ -145,16 +147,74 @@ ggsave("plots/2026-03-15_plot3-question1_splines-for-cv.png", plot3_q1)
 Cross-validation selected an effective degree of freedom of approximately `r fit_one$df`.  
 
 
+# Question b
+
+## Fit the MARS Model
+
+```{r}
+df_train2 <- df_train |>
+  select(-college)
+df_test2  <- df_test  |> 
+  select(-college)
+
+fit_two_mars <- earth(outstate ~ ., data = df_train2)
+summary(fit_two_mars)
+```
 
 
+The regression function is: 
+\[
+\begin{aligned}
+\widehat{\text{outstate}} =\;& 15509.7443
++ 0.4534\,\max(0,\text{apps}-1415)
+- 1.6732\,\max(0,1611-\text{accept}) \\
+&+ 4.8961\,\max(0,886-\text{enroll})
+- 1.7009\,\max(0,1417-\text{f_undergrad})
+- 0.3296\,\max(0,\text{f_undergrad}-1417) \\
+&- 0.7488\,\max(0,5600-\text{room_board})
++ 1.0118\,\max(0,1300-\text{personal})
++ 99.4099\,\max(0,\text{phd}-84) \\
+&- 75.5715\,\max(0,21-\text{perc_alumni})
+- 0.5721\,\max(0,15886-\text{expend})
+- 31.5161\,\max(0,83-\text{grad_rate}) \\
+&- 57.8688\,\max(0,\text{grad_rate}-83).
+\end{aligned}
+\]
 
 
+## Report `expand`
+
+```{r}
+pdp_expend <- partial(
+  object = fit_two_mars,
+  pred.var = "expend",
+  train = df_train2
+)
+
+png("plots/2026-03-15_plot4-question2_partial-fig-for-mars.png",
+    width = 800, height = 600)
+
+plot4_qb <- plotPartial(pdp_expend,
+            xlab = "Expend",
+            ylab = "Predicted Outstate",
+            main = "Partial Dependence Plot for Expend")
+
+plot4_qb
+dev.off()
+
+plot4_qb
+
+```
 
 
+```{r}
+pred_test <- predict(fit_two_mars, newdata = df_test2)
 
+test_mse <- mean((df_test2$outstate - pred_test)^2)
+test_mse
+```
 
-
-
+Variable `expand` is chosen as the arbitrary predictor, and the test MSE is `r test_mse`.  
 
 
 
