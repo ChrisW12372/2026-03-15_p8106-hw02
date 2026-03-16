@@ -11,6 +11,7 @@ output:
     css: style.css
 ---
 
+The whole project can be found here: https://github.com/ChrisW12372/2026-03-15_p8106-hw02.git  
 
 ```{r message=FALSE}
 library(tidyverse)
