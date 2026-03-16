@@ -16,6 +16,7 @@ output:
 library(tidyverse)
 library(earth)
 library(pdp)
+library(mgcv)
 set.seed(202603)
 ```
 
@@ -218,19 +219,57 @@ Variable `expand` is chosen as the arbitrary predictor, and the test MSE is `r t
 
 
 
+# Question c
 
 
+```{r}
+fit_three_gam <- gam(
+  outstate ~
+    s(expend) +
+    s(grad_rate) +
+    s(room_board) +
+    s(enroll) +
+    s(accept) +
+    s(apps),
+  data = df_train2
+)
+
+png("plots/2026-03-15_questionC_GAM_smooth_plots.png",
+    width = 1200, height = 800)
+
+plot(fit_three_gam, pages = 1)
+
+dev.off()
+
+plot(fit_three_gam)
+```
 
 
+* The effect of expenditure per student (expend) is strongly nonlinear. Tuition increases rapidly as expenditure rises but tends to level off at very high levels of expenditure.  
+
+* The relationship between graduation rate (grad_rate) and tuition appears relatively weak, with only a slight increase around moderate graduation rates.  
+
+* The effect of room and board costs (room_board) is positive and approximately linear, suggesting that institutions with higher housing costs also tend to charge higher tuition.  
+
+* The smooth function for enrollment (enroll) shows a clear negative relationship, indicating that larger institutions tend to charge lower out-of-state tuition.  
+
+* The number of accepted students (accept) shows a mild positive association with tuition, although the uncertainty increases for larger values.   
+
+* Finally, the number of applications (apps) also has a positive effect, suggesting that schools receiving more applications tend to have higher tuition levels.  
+ 
 
 
+```{r}
+pred_gam <- predict(fit_three_gam, newdata = df_test2)
+mse_gam <- mean((df_test2$outstate - pred_gam)^2)
+mse_gam
+```
 
 
+The test mean squared error (MSE) of the GAM model is `r mse_gam`.  
 
 
-
-
-
+# Question d
 
 
 
