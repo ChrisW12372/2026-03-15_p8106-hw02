@@ -272,6 +272,13 @@ The test mean squared error (MSE) of the GAM model is `r mse_gam`.
 # Question d
 
 
+```{r}
+fit_four_lm <- lm(outstate ~ expend + grad_rate + room_board + enroll + accept + apps,
+  data = df_train2)
+pred_lm <- predict(fit_four_lm, newdata = df_test2)
+mse_lm <- mean((df_test2$outstate - pred_lm)^2)
+mse_lm
+```
 
 
 

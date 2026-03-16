@@ -1784,6 +1784,12 @@ mse_gam</code></pre>
 </div>
 <div id="question-d" class="section level1" number="5">
 <h1><span class="header-section-number">5</span> Question d</h1>
+<pre class="r"><code>fit_four_lm &lt;- lm(outstate ~ expend + grad_rate + room_board + enroll + accept + apps,
+  data = df_train2)
+pred_lm &lt;- predict(fit_four_lm, newdata = df_test2)
+mse_lm &lt;- mean((df_test2$outstate - pred_lm)^2)
+mse_lm</code></pre>
+<pre><code>## [1] 4974232</code></pre>
 </div>
 
 
